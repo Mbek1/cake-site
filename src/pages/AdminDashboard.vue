@@ -729,7 +729,12 @@ export default {
     },
     logout() {
       if (confirm('Are you sure you want to logout?')) {
-        this.$emit('logout');
+        // Clear authentication data
+        localStorage.removeItem('admin-logged-in');
+        localStorage.removeItem('admin-username');
+        
+        // Redirect to login page
+        this.$router.push('/admin/login');
       }
     }
   }
