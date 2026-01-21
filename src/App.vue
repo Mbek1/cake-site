@@ -1,5 +1,6 @@
 <script>
 import Header from './components/Header.vue'
+import LandingPage from './components/LandingPage.vue'
 import ProductCatalogue from './components/ProductCatalogue.vue'
 import OrderForm from './components/OrderForm.vue'
 import CartModal from './components/CartModal.vue'
@@ -8,6 +9,7 @@ export default {
   name: 'Home',
   components: {
     Header,
+    LandingPage,
     ProductCatalogue,
     OrderForm,
     CartModal
@@ -47,6 +49,12 @@ export default {
       console.log('Order received:', orderData);
       this.cartItems = [];
       this.showCartModal = false;
+    },
+    scrollToCatalogue() {
+      const catalogueSection = document.getElementById('catalogue');
+      if (catalogueSection) {
+        catalogueSection.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   }
 }
@@ -57,6 +65,10 @@ export default {
     <Header 
       :cartCount="cartCount"
       @show-cart="showCart"
+    />
+    
+    <LandingPage 
+      @scroll-to-catalogue="scrollToCatalogue"
     />
     
     <ProductCatalogue 
