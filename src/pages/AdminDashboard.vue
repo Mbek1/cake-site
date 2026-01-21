@@ -2,8 +2,13 @@
   <div class="admin-container">
     <div class="admin-sidebar">
       <div class="admin-header">
-        <h1>🍰 Baker Admin</h1>
-        <p class="baker-name">{{ bakerName }}</p>
+        <div class="logo-section">
+          <div class="logo-icon">🍰</div>
+          <div>
+            <h1>Baker Admin</h1>
+            <p class="baker-name">{{ bakerName }}</p>
+          </div>
+        </div>
       </div>
       <nav class="admin-nav">
         <button 
@@ -12,7 +17,8 @@
           :class="['nav-item', { active: activeTab === item.id }]"
           @click="activeTab = item.id"
         >
-          {{ item.icon }} {{ item.label }}
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
         </button>
       </nav>
       <button @click="logout" class="logout-btn">🚪 Logout</button>
@@ -20,27 +26,44 @@
 
     <div class="admin-content">
       <!-- Dashboard Tab -->
-      <section v-if="activeTab === 'dashboard'" class="tab-content">
-        <h2>📊 Dashboard</h2>
-        <div class="dashboard-stats">
-          <div class="stat-card">
-            <div class="stat-number">{{ totalOrders }}</div>
-            <div class="stat-label">Total Orders</div>
+      <transition name="fadeSlide">
+        <section v-if="activeTab === 'dashboard'" class="tab-content" key="dashboard">
+          <div class="section-header">
+            <h2>📊 Dashboard Overview</h2>
+            <p class="section-subtitle">Real-time bakery statistics</p>
           </div>
-          <div class="stat-card">
-            <div class="stat-number">${{ totalRevenue.toFixed(2) }}</div>
-            <div class="stat-label">Total Revenue</div>
+          <div class="dashboard-stats">
+            <div class="stat-card" style="animation-delay: 0s">
+              <div class="stat-icon">📦</div>
+              <div class="stat-info">
+                <div class="stat-number">{{ totalOrders }}</div>
+                <div class="stat-label">Total Orders</div>
+              </div>
+            </div>
+            <div class="stat-card" style="animation-delay: 0.1s">
+              <div class="stat-icon">💰</div>
+              <div class="stat-info">
+                <div class="stat-number">${{ totalRevenue.toFixed(2) }}</div>
+                <div class="stat-label">Total Revenue</div>
+              </div>
+            </div>
+            <div class="stat-card" style="animation-delay: 0.2s">
+              <div class="stat-icon">⏳</div>
+              <div class="stat-info">
+                <div class="stat-number">{{ pendingOrders }}</div>
+                <div class="stat-label">Pending Orders</div>
+              </div>
+            </div>
+            <div class="stat-card" style="animation-delay: 0.3s">
+              <div class="stat-icon">✅</div>
+              <div class="stat-info">
+                <div class="stat-number">{{ completedOrders }}</div>
+                <div class="stat-label">Completed Orders</div>
+              </div>
+            </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-number">{{ pendingOrders }}</div>
-            <div class="stat-label">Pending Orders</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">{{ completedOrders }}</div>
-            <div class="stat-label">Completed Orders</div>
-          </div>
-        </div>
-      </section>
+        </section>
+      </transition>
 
       <!-- Orders Tab -->
       <section v-if="activeTab === 'orders'" class="tab-content">
@@ -194,142 +217,157 @@
       </div>
 
       <!-- Calendar Tab -->
-      <section v-if="activeTab === 'calendar'" class="tab-content">
-        <h2>📅 Delivery Schedule</h2>
-        <div class="calendar-container">
-          <div class="calendar-header">
-            <button @click="previousMonth" class="nav-btn">←</button>
-            <h3>{{ monthYear }}</h3>
-            <button @click="nextMonth" class="nav-btn">→</button>
+      <transition name="fadeSlide">
+        <section v-if="activeTab === 'calendar'" class="tab-content" key="calendar">
+          <div class="section-header">
+            <h2>📅 Delivery Schedule</h2>
+            <p class="section-subtitle">View scheduled deliveries and manage dates</p>
           </div>
-          <div class="calendar-grid">
-            <div class="day-header">Sun</div>
-            <div class="day-header">Mon</div>
-            <div class="day-header">Tue</div>
-            <div class="day-header">Wed</div>
-            <div class="day-header">Thu</div>
-            <div class="day-header">Fri</div>
-            <div class="day-header">Sat</div>
-            
-            <div 
-              v-for="day in calendarDays" 
-              :key="day"
-              :class="['calendar-day', { 
-                'other-month': day.month !== currentMonth,
-                'has-orders': day.orders > 0
-              }]"
-            >
-              <div class="day-number">{{ day.date }}</div>
-              <div v-if="day.orders > 0" class="day-orders">{{ day.orders }} orders</div>
+          <div class="calendar-container">
+            <div class="calendar-header">
+              <button @click="previousMonth" class="nav-btn">←</button>
+              <h3>{{ monthYear }}</h3>
+              <button @click="nextMonth" class="nav-btn">→</button>
+            </div>
+            <div class="calendar-grid">
+              <div class="day-header">Sun</div>
+              <div class="day-header">Mon</div>
+              <div class="day-header">Tue</div>
+              <div class="day-header">Wed</div>
+              <div class="day-header">Thu</div>
+              <div class="day-header">Fri</div>
+              <div class="day-header">Sat</div>
+              
+              <div 
+                v-for="day in calendarDays" 
+                :key="day"
+                :class="['calendar-day', { 
+                  'other-month': day.month !== currentMonth,
+                  'has-orders': day.orders > 0
+                }]"
+              >
+                <div class="day-number">{{ day.date }}</div>
+                <div v-if="day.orders > 0" class="day-orders">{{ day.orders }} orders</div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </transition>
 
       <!-- Products Tab -->
-      <section v-if="activeTab === 'products'" class="tab-content">
-        <h2>🎂 Manage Products</h2>
-        
-        <button @click="startAddingProduct" class="btn-primary add-btn">➕ Add New Cake</button>
+      <transition name="fadeSlide">
+        <section v-if="activeTab === 'products'" class="tab-content" key="products">
+          <div class="section-header">
+            <h2>🎂 Manage Products</h2>
+            <p class="section-subtitle">Create and manage your cake offerings</p>
+          </div>
+          
+          <button @click="startAddingProduct" class="btn-primary add-btn">➕ Add New Cake</button>
 
-        <div v-if="products.length === 0" class="empty-state">
-          <p>No products yet. Create your first cake!</p>
-        </div>
+          <div v-if="products.length === 0" class="empty-state">
+            <p>No products yet. Create your first cake!</p>
+          </div>
 
-        <div v-else class="products-grid">
-          <div v-for="product in products" :key="product.id" class="product-card">
-            <img :src="product.image" :alt="product.name" class="product-image">
-            <div class="product-info">
-              <h3>{{ product.name }}</h3>
-              <p class="description">{{ product.description }}</p>
-              <div class="price">${{ product.price.toFixed(2) }}</div>
-              <div class="actions">
-                <button @click.stop="editProduct(product)" class="btn-edit">✏️ Edit</button>
-                <button @click.stop="deleteProduct(product.id)" class="btn-delete">🗑️ Delete</button>
+          <div v-else class="products-grid">
+            <div v-for="product in products" :key="product.id" class="product-card">
+              <img :src="product.image" :alt="product.name" class="product-image">
+              <div class="product-info">
+                <h3>{{ product.name }}</h3>
+                <p class="description">{{ product.description }}</p>
+                <div class="price">${{ product.price.toFixed(2) }}</div>
+                <div class="actions">
+                  <button @click.stop="editProduct(product)" class="btn-edit">✏️ Edit</button>
+                  <button @click.stop="deleteProduct(product.id)" class="btn-delete">🗑️ Delete</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Product Edit/Add Modal -->
-        <div v-if="isEditingProduct && selectedProduct" class="modal-overlay" @click.self="cancelEditProduct">
-          <div class="modal-content product-edit-modal">
-            <button class="close-btn" @click="cancelEditProduct">✕</button>
-            
-            <h2>{{ selectedProduct.id ? 'Edit Cake' : 'Add New Cake' }}</h2>
-            
-            <div class="product-form">
-              <div class="form-group">
-                <label>Cake Name</label>
-                <input v-model="selectedProduct.name" type="text" class="form-input" placeholder="e.g., Chocolate Delight">
-              </div>
+          <!-- Product Edit/Add Modal -->
+          <div v-if="isEditingProduct && selectedProduct" class="modal-overlay" @click.self="cancelEditProduct">
+            <div class="modal-content product-edit-modal">
+              <button class="close-btn" @click="cancelEditProduct">✕</button>
+              
+              <h2>{{ selectedProduct.id ? 'Edit Cake' : 'Add New Cake' }}</h2>
+              
+              <div class="product-form">
+                <div class="form-group">
+                  <label>Cake Name</label>
+                  <input v-model="selectedProduct.name" type="text" class="form-input" placeholder="e.g., Chocolate Delight">
+                </div>
 
-              <div class="form-group">
-                <label>Description</label>
-                <textarea v-model="selectedProduct.description" class="form-input" rows="3" placeholder="Describe your cake..."></textarea>
-              </div>
+                <div class="form-group">
+                  <label>Description</label>
+                  <textarea v-model="selectedProduct.description" class="form-input" rows="3" placeholder="Describe your cake..."></textarea>
+                </div>
 
-              <div class="form-group">
-                <label>Base Price ($)</label>
-                <input v-model.number="selectedProduct.price" type="number" class="form-input" placeholder="35" step="0.01">
-              </div>
+                <div class="form-group">
+                  <label>Base Price ($)</label>
+                  <input v-model.number="selectedProduct.price" type="number" class="form-input" placeholder="35" step="0.01">
+                </div>
 
-              <div class="form-group">
-                <label>Product Image</label>
-                <div class="image-upload-section">
-                  <div class="upload-options">
-                    <div class="upload-tab">
-                      <h4>Upload Image</h4>
-                      <input @change="handleImageUpload" type="file" accept="image/*" class="file-input">
-                      <small>Supported: JPG, PNG, GIF (Max 5MB)</small>
-                    </div>
-                    <div class="upload-tab">
-                      <h4>Or Use URL</h4>
-                      <input v-model="selectedProduct.image" type="text" class="form-input" placeholder="https://images.unsplash.com/...">
+                <div class="form-group">
+                  <label>Product Image</label>
+                  <div class="image-upload-section">
+                    <div class="upload-options">
+                      <div class="upload-tab">
+                        <h4>Upload Image</h4>
+                        <input @change="handleImageUpload" type="file" accept="image/*" class="file-input">
+                        <small>Supported: JPG, PNG, GIF (Max 5MB)</small>
+                      </div>
+                      <div class="upload-tab">
+                        <h4>Or Use URL</h4>
+                        <input v-model="selectedProduct.image" type="text" class="form-input" placeholder="https://images.unsplash.com/...">
+                      </div>
                     </div>
                   </div>
+                  <div v-if="selectedProduct.image" class="image-preview">
+                    <img :src="selectedProduct.image" :alt="selectedProduct.name">
+                  </div>
                 </div>
-                <div v-if="selectedProduct.image" class="image-preview">
-                  <img :src="selectedProduct.image" :alt="selectedProduct.name">
-                </div>
-              </div>
 
-              <div class="modal-actions">
-                <button @click="saveProduct" class="btn-primary">💾 Save</button>
-                <button @click="cancelEditProduct" class="btn-secondary">Cancel</button>
+                <div class="modal-actions">
+                  <button @click="saveProduct" class="btn-primary">💾 Save</button>
+                  <button @click="cancelEditProduct" class="btn-secondary">Cancel</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </transition>
 
       <!-- Settings Tab -->
-      <section v-if="activeTab === 'settings'" class="tab-content">
-        <h2>⚙️ Baker Settings</h2>
-        <div class="settings-form">
-          <div class="form-group">
-            <label>Baker Name</label>
-            <input v-model="bakerName" type="text" class="form-input">
+      <transition name="fadeSlide">
+        <section v-if="activeTab === 'settings'" class="tab-content" key="settings">
+          <div class="section-header">
+            <h2>⚙️ Baker Settings</h2>
+            <p class="section-subtitle">Manage your business profile and preferences</p>
           </div>
-          <div class="form-group">
-            <label>Business Email</label>
-            <input v-model="bakerEmail" type="email" class="form-input">
+          <div class="settings-form">
+            <div class="form-group">
+              <label>Baker Name</label>
+              <input v-model="bakerName" type="text" class="form-input" placeholder="Your Bakery Name">
+            </div>
+            <div class="form-group">
+              <label>Business Email</label>
+              <input v-model="bakerEmail" type="email" class="form-input" placeholder="baker@yourbakery.com">
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input v-model="bakerPhone" type="tel" class="form-input" placeholder="(555) 123-4567">
+            </div>
+            <div class="form-group">
+              <label>Business Address</label>
+              <textarea v-model="bakerAddress" class="form-input" rows="3" placeholder="123 Main St, Your City, State 12345"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Default Delivery Time</label>
+              <input v-model="defaultDeliveryTime" type="time" class="form-input">
+            </div>
+            <button @click="saveSettings" class="btn-primary">💾 Save Settings</button>
           </div>
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input v-model="bakerPhone" type="tel" class="form-input">
-          </div>
-          <div class="form-group">
-            <label>Business Address</label>
-            <textarea v-model="bakerAddress" class="form-input" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Default Delivery Time</label>
-            <input v-model="defaultDeliveryTime" type="time" class="form-input">
-          </div>
-          <button @click="saveSettings" class="btn-primary">💾 Save Settings</button>
-        </div>
-      </section>
+        </section>
+      </transition>
     </div>
   </div>
 </template>
@@ -699,44 +737,117 @@ export default {
 </script>
 
 <style scoped>
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fadeSlide-enter-active,
+.fadeSlide-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fadeSlide-enter-from,
+.fadeSlide-leave-to {
+  opacity: 0;
+}
+
 .admin-container {
   display: flex;
   height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f5 100%);
 }
 
 .admin-sidebar {
-  width: 250px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  width: 280px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ff6b9d 100%);
   color: white;
   padding: 2rem 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(245, 87, 108, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-sidebar::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: float 8s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-20px) translateX(10px); }
 }
 
 .admin-header {
-  padding: 0 1.5rem;
+  padding: 1.5rem;
   margin-bottom: 2rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo-icon {
+  font-size: 2.5rem;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
 
 .admin-header h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 .baker-name {
-  margin: 0.5rem 0 0 0;
-  font-size: 0.9rem;
-  opacity: 0.9;
+  margin: 0.25rem 0 0 0;
+  font-size: 0.85rem;
+  opacity: 0.95;
+  font-weight: 500;
 }
 
 .admin-nav {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 1rem;
 }
 
 .nav-item {
@@ -747,243 +858,328 @@ export default {
   text-align: left;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   border-left: 4px solid transparent;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.nav-icon {
+  font-size: 1.3rem;
+}
+
+.nav-label {
+  flex: 1;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(5px);
 }
 
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   border-left-color: white;
+  box-shadow: inset -2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
 .logout-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid white;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   color: white;
   padding: 0.75rem 1.5rem;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   margin: 1rem;
-  font-weight: bold;
+  font-weight: 600;
   transition: all 0.3s ease;
+  font-size: 0.95rem;
 }
 
 .logout-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .admin-content {
   flex: 1;
   overflow-y: auto;
-  padding: 2rem;
+  padding: 2.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f5 100%);
 }
 
 .tab-content {
   background: white;
-  border-radius: 10px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 20px rgba(240, 147, 251, 0.08);
+  border: 1px solid rgba(240, 147, 251, 0.1);
+  animation: slideInUp 0.6s ease-out;
 }
 
-h2 {
-  margin-top: 0;
-  color: #333;
-  font-size: 1.8rem;
+.section-header {
+  margin-bottom: 2.5rem;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.section-subtitle {
+  margin: 0.5rem 0 0 0;
+  color: #999;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
 /* Dashboard Stats */
 .dashboard-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;
-  padding: 1.5rem;
-  border-radius: 10px;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  animation: slideInUp 0.6s ease-out;
+  box-shadow: 0 8px 24px rgba(245, 87, 108, 0.15);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(245, 87, 108, 0.2);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  min-width: 3rem;
   text-align: center;
 }
 
+.stat-info {
+  flex: 1;
+}
+
 .stat-number {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -1px;
 }
 
 .stat-label {
-  font-size: 0.95rem;
-  opacity: 0.9;
+  font-size: 0.9rem;
+  opacity: 0.95;
+  margin: 0.5rem 0 0 0;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
-/* Orders List */
-.filter-bar {
+/* Orders Controls */
+.orders-controls {
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
-.search-input, .filter-select {
-  padding: 0.75rem;
-  border: 2px solid #ddd;
-  border-radius: 5px;
-  font-size: 1rem;
+.search-input,
+.filter-select {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
   font-family: inherit;
+  transition: all 0.3s ease;
+  background: white;
 }
 
 .search-input {
   flex: 1;
+  min-width: 200px;
 }
 
-.search-input:focus, .filter-select:focus {
+.search-input:focus,
+.filter-select:focus {
   outline: none;
   border-color: #f093fb;
+  box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.1);
 }
 
+/* Orders List */
 .orders-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
 }
 
 .order-card {
   background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  animation: slideInUp 0.6s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.order-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  transition: width 0.3s ease;
 }
 
 .order-card:hover {
   border-color: #f093fb;
-  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.2);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(240, 147, 251, 0.12);
+  transform: translateY(-4px);
 }
 
-.order-card.pending {
-  border-left: 4px solid #ff9800;
-}
-
-.order-card.in-progress {
-  border-left: 4px solid #2196f3;
-}
-
-.order-card.ready {
-  border-left: 4px solid #4caf50;
-}
-
-.order-card.completed {
-  border-left: 4px solid #9c27b0;
-}
-
-.order-card.cancelled {
-  border-left: 4px solid #f44336;
+.order-card:hover::before {
+  width: 100%;
+  opacity: 0.05;
 }
 
 .order-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1rem;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 0.75rem;
+  gap: 1rem;
 }
 
-.order-id {
-  font-weight: bold;
-  color: #333;
+.order-number {
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 1rem;
 }
 
 .order-status {
-  font-size: 0.8rem;
-  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.85rem;
   border-radius: 20px;
-  font-weight: bold;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
 }
 
 .order-status.pending {
-  background: #ffe0b2;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffe0b2 100%);
   color: #e65100;
 }
 
-.order-status.in-progress {
-  background: #bbdefb;
-  color: #1565c0;
-}
-
-.order-status.ready {
-  background: #c8e6c9;
+.order-status.completed {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
   color: #2e7d32;
 }
 
-.order-status.completed {
-  background: #e1bee7;
-  color: #6a1b9a;
-}
-
 .order-status.cancelled {
-  background: #ffcdd2;
+  background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%);
   color: #c62828;
 }
 
 .order-customer {
   margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .order-customer strong {
   display: block;
-  color: #333;
-  margin-bottom: 0.3rem;
+  color: #1a1a1a;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
 }
 
 .customer-contact {
-  font-size: 0.85rem;
-  color: #666;
+  font-size: 0.8rem;
+  color: #777;
   display: block;
+  line-height: 1.3;
 }
 
 .order-items {
   margin: 1rem 0;
+  max-height: 120px;
+  overflow-y: auto;
 }
 
 .order-item-preview {
-  background: #f5f5f5;
-  padding: 0.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f5 100%);
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #f093fb;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #333;
   margin-bottom: 0.5rem;
+  font-weight: 500;
 }
 
 .order-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 2px solid #f0f0f0;
-  padding-top: 0.75rem;
-  font-size: 0.9rem;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 1rem;
 }
 
 .order-date {
-  color: #666;
+  color: #777;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .order-total {
-  font-weight: bold;
-  color: #f5576c;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   font-size: 1.1rem;
 }
 
 .empty-state {
   text-align: center;
-  padding: 3rem;
+  padding: 4rem 2rem;
   color: #999;
 }
 
@@ -994,64 +1190,83 @@ h2 {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-content {
   background: white;
-  border-radius: 10px;
-  padding: 2rem;
-  max-width: 700px;
+  border-radius: 15px;
+  padding: 2.5rem;
+  max-width: 750px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   position: relative;
+  animation: slideInUp 0.4s ease-out;
 }
 
 .close-btn {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: #f0f0f0;
-  border: none;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f5 100%);
+  border: 2px solid #e0e0e0;
   width: 40px;
   height: 40px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
 }
 
 .close-btn:hover {
-  background: #f5576c;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;
+  border-color: transparent;
+  transform: rotate(90deg);
 }
 
 .order-details-modal h2 {
-  margin-top: 1rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #1a1a1a;
+  font-weight: 700;
 }
 
 .details-section {
   margin: 1.5rem 0;
-  padding: 1rem;
-  background: #f9f9f9;
-  border-radius: 8px;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f5 100%);
+  border-radius: 10px;
+  border-left: 4px solid #f093fb;
 }
 
 .details-section h3 {
   margin: 0 0 1rem 0;
-  color: #333;
+  color: #1a1a1a;
+  font-weight: 600;
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .detail-row:last-child {
@@ -1059,116 +1274,148 @@ h2 {
 }
 
 .label {
-  font-weight: bold;
+  font-weight: 600;
   color: #666;
 }
 
 .value {
   color: #333;
+  font-weight: 500;
 }
 
 .value.total {
-  color: #f5576c;
-  font-size: 1.2rem;
-  font-weight: bold;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.3rem;
+  font-weight: 700;
 }
 
 .cake-details {
   background: white;
-  padding: 1rem;
+  padding: 1.25rem;
   border-left: 4px solid #f093fb;
   margin-bottom: 1rem;
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .cake-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.cake-header strong {
+  color: #1a1a1a;
+  font-size: 1rem;
 }
 
 .qty {
-  background: #f093fb;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .cake-custom {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  margin: 0.5rem 0;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
 }
 
 .cake-custom p {
   margin: 0;
   font-size: 0.85rem;
+  color: #555;
+}
+
+.cake-custom strong {
+  color: #1a1a1a;
 }
 
 .cake-special {
-  background: #fff3cd;
-  padding: 0.75rem;
-  border-radius: 4px;
-  margin: 0.5rem 0;
+  background: linear-gradient(135deg, #fff9c4 0%, #fff8e1 100%);
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  border-left: 4px solid #fbc02d;
+}
+
+.cake-special strong {
+  color: #e65100;
 }
 
 .cake-special p {
   margin: 0.5rem 0;
   font-size: 0.9rem;
+  color: #333;
 }
 
 .cake-price {
   text-align: right;
-  font-weight: bold;
+  font-weight: 700;
   color: #f5576c;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
 }
 
 .status-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .status-btn {
-  padding: 0.75rem 1rem;
-  border: 2px solid #ddd;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid #e0e0e0;
   background: white;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s ease;
+  font-weight: 600;
+  color: #666;
 }
 
 .status-btn:hover {
   border-color: #f093fb;
-  background: #f9f9f9;
+  background: #faf5ff;
+  color: #f5576c;
 }
 
 .status-btn.active {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;
   border-color: transparent;
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
 }
 
 .modal-actions {
   display: flex;
   gap: 1rem;
-  margin-top: 1.5rem;
-  border-top: 2px solid #e0e0e0;
+  margin-top: 2rem;
+  border-top: 2px solid #f0f0f0;
   padding-top: 1.5rem;
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   flex: 1;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 5px;
+  padding: 0.85rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
   font-size: 0.95rem;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .btn-primary {
@@ -1178,24 +1425,27 @@ h2 {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+  box-shadow: 0 8px 20px rgba(245, 87, 108, 0.3);
 }
 
 .btn-secondary {
   background: #f0f0f0;
   color: #333;
+  border-color: #ddd;
 }
 
 .btn-secondary:hover {
-  background: #e0e0e0;
+  background: #e8e8e8;
+  border-color: #999;
 }
 
 /* Calendar */
 .calendar-container {
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 2rem;
   margin-top: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .calendar-header {
@@ -1206,77 +1456,90 @@ h2 {
 }
 
 .nav-btn {
-  background: #f093fb;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   border: none;
   color: white;
-  width: 40px;
-  height: 40px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   cursor: pointer;
   font-size: 1.2rem;
   transition: all 0.3s ease;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-btn:hover {
-  background: #f5576c;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .day-header {
-  background: #f093fb;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   color: white;
-  padding: 0.75rem;
+  padding: 1rem;
   text-align: center;
-  font-weight: bold;
-  border-radius: 4px;
+  font-weight: 700;
+  border-radius: 8px;
+  font-size: 0.9rem;
 }
 
 .calendar-day {
   aspect-ratio: 1;
   border: 2px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 0.5rem;
+  border-radius: 8px;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  background: white;
+  font-size: 0.85rem;
 }
 
 .calendar-day:hover {
   border-color: #f093fb;
-  background: #f9f9f9;
+  background: #faf5ff;
+  transform: translateY(-2px);
 }
 
 .calendar-day.other-month {
-  opacity: 0.3;
+  opacity: 0.4;
 }
 
 .calendar-day.has-orders {
-  background: #e3f2fd;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f4ff 100%);
   border-color: #2196f3;
 }
 
 .day-number {
-  font-weight: bold;
+  font-weight: 700;
   color: #333;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .day-orders {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #2196f3;
   font-weight: bold;
 }
 
-/* Settings */
+/* Settings & Forms */
 .settings-form {
   max-width: 600px;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .form-group {
@@ -1285,23 +1548,234 @@ h2 {
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
+  margin-bottom: 0.65rem;
+  font-weight: 600;
   color: #333;
+  font-size: 0.95rem;
 }
 
 .form-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 2px solid #ddd;
-  border-radius: 5px;
-  font-size: 1rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
   font-family: inherit;
+  transition: all 0.3s ease;
+  background: white;
 }
 
 .form-input:focus {
   outline: none;
   border-color: #f093fb;
+  box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.1);
+}
+
+/* Products Grid */
+.add-btn {
+  margin-bottom: 1.5rem;
+  padding: 0.85rem 1.5rem;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 87, 108, 0.3);
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+  animation: slideInUp 0.6s ease-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.product-card:hover {
+  border-color: #f093fb;
+  box-shadow: 0 12px 32px rgba(240, 147, 251, 0.15);
+  transform: translateY(-6px);
+}
+
+.product-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f5 100%);
+}
+
+.product-info {
+  padding: 1.5rem;
+}
+
+.product-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.description {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0.75rem 0;
+  line-height: 1.5;
+}
+
+.price {
+  font-size: 1.4rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0.75rem 0;
+}
+
+.product-info .actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.btn-edit,
+.btn-delete {
+  flex: 1;
+  padding: 0.65rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.btn-edit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+}
+
+.btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+/* Product Edit Modal */
+.product-edit-modal {
+  max-width: 650px;
+}
+
+.product-form {
+  margin: 1.5rem 0;
+}
+
+.product-form .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.image-preview {
+  margin-top: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+}
+
+.image-upload-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f5 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  border: 2px dashed #f093fb;
+}
+
+.upload-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.upload-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.upload-tab h4 {
+  margin: 0;
+  color: #333;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.file-input {
+  padding: 0.85rem;
+  border: 2px dashed #f093fb;
+  border-radius: 8px;
+  cursor: pointer;
+  background: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.file-input:hover {
+  border-color: #f5576c;
+  background: #faf5ff;
+}
+
+.upload-tab small {
+  color: #666;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    width: 220px;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
@@ -1311,202 +1785,206 @@ h2 {
 
   .admin-sidebar {
     width: 100%;
+    padding: 1rem 0;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .admin-header {
+    flex: 1;
     padding: 1rem;
+    margin-bottom: 0;
+    border-bottom: none;
+    border-right: 2px solid rgba(255, 255, 255, 0.2);
   }
 
   .admin-nav {
     flex-direction: row;
-    overflow-x: auto;
+    flex: 1;
+    padding: 0 1rem;
+    gap: 0;
   }
 
   .nav-item {
-    padding: 0.75rem;
-    font-size: 0.9rem;
+    border-left: none;
+    border-bottom: 4px solid transparent;
+    border-radius: 0;
+    padding: 1rem;
     white-space: nowrap;
+    overflow-x: auto;
   }
 
-  .calendar-grid {
-    gap: 0.25rem;
+  .nav-item.active {
+    border-left: none;
+    border-bottom-color: white;
+  }
+
+  .logout-btn {
+    margin: 0 1rem;
+  }
+
+  .admin-content {
+    padding: 1.5rem;
+  }
+
+  .tab-content {
+    padding: 1.5rem;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
   }
 
   .orders-list {
     grid-template-columns: 1fr;
   }
+
+  .calendar-grid {
+    gap: 0.5rem;
+  }
+
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .upload-options {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-sidebar {
+    flex-direction: column;
+    padding: 1rem 0;
+  }
+
+  .admin-header {
+    border-right: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    width: 100%;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .logo-section {
+    width: 100%;
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    width: 100%;
+    overflow-x: auto;
+    padding: 0;
+  }
+
+  .nav-item {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    gap: 0.3rem;
+  }
+
+  .nav-label {
+    display: none;
+  }
+
+  .nav-icon {
+    font-size: 1rem;
+  }
+
+  .logout-btn {
+    margin: 0.5rem;
+  }
+
+  .admin-content {
+    padding: 1rem;
+  }
+
+  .tab-content {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-icon {
+    min-width: 2.5rem;
+    font-size: 2rem;
+  }
+
+  .stat-number {
+    font-size: 1.4rem;
+  }
+
+  .modal-content {
+    max-width: 90vw;
+    max-height: 95vh;
+    padding: 1.5rem;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-image {
+    height: 150px;
+  }
+
+  .calendar-day {
+    padding: 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  .day-header {
+    padding: 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .section-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
 }
 
 @media print {
   .admin-sidebar,
-/* Products Grid */
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.product-card {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid #e0e0e0;
-  transition: all 0.3s ease;
-}
-
-.product-card:hover {
-  border-color: #f093fb;
-  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.2);
-  transform: translateY(-2px);
-}
-
-.product-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-}
-
-.product-info {
-  padding: 1rem;
-}
-
-.product-info h3 {
-  margin: 0 0 0.5rem 0;
-  color: #333;
-  font-size: 1.1rem;
-}
-
-.description {
-  color: #666;
-  font-size: 0.9rem;
-  margin: 0.5rem 0;
-  line-height: 1.4;
-}
-
-.price {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #f5576c;
-  margin: 0.75rem 0;
-}
-
-.product-info .actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.btn-edit, .btn-delete {
-  flex: 1;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-}
-
-.btn-edit {
-  background: #2196f3;
-  color: white;
-}
-
-.btn-edit:hover {
-  background: #1976d2;
-}
-
-.btn-delete {
-  background: #f44336;
-  color: white;
-}
-
-.btn-delete:hover {
-  background: #da190b;
-}
-
-.add-btn {
-  margin-bottom: 1.5rem;
-}
-
-/* Product Edit Modal */
-.product-edit-modal {
-  max-width: 600px;
-}
-
-.product-form {
-  margin: 1.5rem 0;
-}
-
-.product-form .form-group {
-  margin-bottom: 1rem;
-}
-
-.image-preview {
-  margin-top: 1rem;
-  border-radius: 8px;
-  overflow: hidden;
-  max-width: 300px;
-}
-
-.image-preview img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-}
-
-.image-upload-section {
-  background: #f9f9f9;
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 0.5rem 0;
-}
-
-.upload-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.upload-tab {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.upload-tab h4 {
-  margin: 0;
-  color: #333;
-  font-size: 0.95rem;
-}
-
-.file-input {
-  padding: 0.5rem;
-  border: 2px dashed #f093fb;
-  border-radius: 5px;
-  cursor: pointer;
-  background: white;
-}
-
-.file-input:hover {
-  border-color: #f5576c;
-  background: #f9f9f9;
-}
-
-.upload-tab small {
-  color: #666;
-  font-size: 0.8rem;
-}
-
+  .logout-btn,
   .modal-actions,
-  .filter-bar {
-    display: none;
+  .orders-controls,
+  .add-btn,
+  .product-info .actions {
+    display: none !important;
   }
 
   .modal-content {
     position: static;
     box-shadow: none;
     max-height: 100%;
+    background: white;
+  }
+
+  .admin-content {
+    padding: 0;
+  }
+
+  .tab-content {
+    box-shadow: none;
+    border: 1px solid #ddd;
   }
 }
 </style>
