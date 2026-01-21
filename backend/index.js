@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 const app = express();
@@ -28,8 +29,51 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// In-memory storage for orders (use database in production)
-let orders = [];
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cake-site';
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('✅ Connected to MongoDB');
+}).catch(err => {
+  console.error('❌ MongoDB connection error:', err.message);
+  console.log('⚠️  Running in in-memory mode. Install MongoDB or set MONGODB_URI in .env');
+});
+
+// MongoDB Schemas
+const orderSchema = new mongoose.Schema({
+  id: { type: String, unique: true, required: true },
+  customer: {
+    name: String,
+    email: String,
+    phone: String
+  },
+  items: [{
+    id: String,
+    name: String,
+    price: Number,
+    quantity: Number,
+    customization: {
+      size: String,
+      flavor: String,
+      color: String,
+      specialDetails: String
+    }
+  }],
+  total: Number,
+  deliveryDate: String,
+  notes: String,
+  status: { type: String, default: 'pending' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
+// Fallback in-memory storage if MongoDB is not available
+let ordersMemory = [];
 
 // Routes
 app.get('/', (req, res) => {
@@ -41,17 +85,40 @@ app.get('/api/health', (req, res) => {
 });
 
 // Get all orders
-app.get('/api/orders', (req, res) => {
-  res.json(orders);
+app.get('/api/orders', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const orders = await Order.find();
+      res.json(orders);
+    } else {
+      res.json(ordersMemory);
+    }
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
 });
 
 // Get single order
-app.get('/api/orders/:id', (req, res) => {
-  const order = orders.find(o => o.id === req.params.id);
-  if (!order) {
-    return res.status(404).json({ error: 'Order not found' });
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const order = await Order.findOne({ id: req.params.id });
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+      res.json(order);
+    } else {
+      const order = ordersMemory.find(o => o.id === req.params.id);
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+      res.json(order);
+    }
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    res.status(500).json({ error: 'Failed to fetch order' });
   }
-  res.json(order);
 });
 
 // Submit new order
@@ -77,8 +144,13 @@ app.post('/api/orders', async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Store order
-    orders.push(order);
+    // Store order in database or memory
+    if (mongoose.connection.readyState === 1) {
+      const newOrder = new Order(order);
+      await newOrder.save();
+    } else {
+      ordersMemory.push(order);
+    }
 
     // Send email to baker
     const bakerEmail = process.env.BAKER_EMAIL || 'baker@pastryparadise.com';
@@ -114,21 +186,44 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // Update order status
-app.patch('/api/orders/:id', (req, res) => {
-  const { status } = req.body;
-  const order = orders.find(o => o.id === req.params.id);
+app.patch('/api/orders/:id', async (req, res) => {
+  try {
+    const { status } = req.body;
 
-  if (!order) {
-    return res.status(404).json({ error: 'Order not found' });
+    if (mongoose.connection.readyState === 1) {
+      const order = await Order.findOneAndUpdate(
+        { id: req.params.id },
+        { status, updatedAt: new Date() },
+        { new: true }
+      );
+
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      res.json({
+        message: 'Order updated successfully',
+        order
+      });
+    } else {
+      const order = ordersMemory.find(o => o.id === req.params.id);
+
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      order.status = status;
+      order.updatedAt = new Date().toISOString();
+
+      res.json({
+        message: 'Order updated successfully',
+        order
+      });
+    }
+  } catch (error) {
+    console.error('Error updating order:', error);
+    res.status(500).json({ error: 'Failed to update order' });
   }
-
-  order.status = status;
-  order.updatedAt = new Date().toISOString();
-
-  res.json({
-    message: 'Order updated successfully',
-    order
-  });
 });
 
 // Get products (returns from frontend storage for now)
