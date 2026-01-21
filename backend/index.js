@@ -18,43 +18,38 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Email transporter setup
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: process.env.SMTP_PORT || 587,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
-});
-
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cake-site';
+const connectDB = async () => {
+  if (mongoose.connection.readyState === 1) {
+    console.log('Already connected to MongoDB');
+    return;
+  }
+  
+  try {
+    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cake-site';
+    await mongoose.connect(mongoURI);
+    console.log('Connected to MongoDB');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    // Use in-memory fallback if DB fails
+    console.warn('Using in-memory storage (database unavailable)');
+  }
+};
 
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('✅ Connected to MongoDB');
-}).catch(err => {
-  console.error('❌ MongoDB connection error:', err.message);
-  console.log('⚠️  Running in in-memory mode. Install MongoDB or set MONGODB_URI in .env');
-});
-
-// MongoDB Schemas
+// Order Schema
 const orderSchema = new mongoose.Schema({
   id: { type: String, unique: true, required: true },
   customer: {
     name: String,
     email: String,
-    phone: String
+    phone: String,
+    address: String
   },
   items: [{
     id: String,
     name: String,
-    price: Number,
     quantity: Number,
+    price: Number,
     customization: {
       size: String,
       flavor: String,
@@ -72,8 +67,81 @@ const orderSchema = new mongoose.Schema({
 
 const Order = mongoose.model('Order', orderSchema);
 
-// Fallback in-memory storage if MongoDB is not available
-let ordersMemory = [];
+// In-memory fallback for orders (if database unavailable)
+let ordersInMemory = [];
+
+// Email transporter setup
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: process.env.SMTP_PORT || 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
+// Helper to get orders from DB or memory
+const getOrders = async () => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      return await Order.find().sort({ createdAt: -1 });
+    }
+  } catch (error) {
+    console.error('Error fetching from DB:', error);
+  }
+  return ordersInMemory;
+};
+
+// Helper to save order
+const saveOrder = async (orderData) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const order = new Order(orderData);
+      return await order.save();
+    }
+  } catch (error) {
+    console.error('Error saving to DB:', error);
+  }
+  // Fallback to in-memory
+  ordersInMemory.push(orderData);
+  return orderData;
+};
+
+// Helper to update order
+const updateOrderStatus = async (orderId, status) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      return await Order.findOneAndUpdate(
+        { id: orderId },
+        { status, updatedAt: new Date().toISOString() },
+        { new: true }
+      );
+    }
+  } catch (error) {
+    console.error('Error updating in DB:', error);
+  }
+  // Fallback to in-memory
+  const order = ordersInMemory.find(o => o.id === orderId);
+  if (order) {
+    order.status = status;
+    order.updatedAt = new Date().toISOString();
+  }
+  return order;
+};
+
+// Helper to find single order
+const findOrder = async (orderId) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      return await Order.findOne({ id: orderId });
+    }
+  } catch (error) {
+    console.error('Error finding in DB:', error);
+  }
+  // Fallback to in-memory
+  return ordersInMemory.find(o => o.id === orderId);
+};
 
 // Routes
 app.get('/', (req, res) => {
@@ -87,12 +155,8 @@ app.get('/api/health', (req, res) => {
 // Get all orders
 app.get('/api/orders', async (req, res) => {
   try {
-    if (mongoose.connection.readyState === 1) {
-      const orders = await Order.find();
-      res.json(orders);
-    } else {
-      res.json(ordersMemory);
-    }
+    const orders = await getOrders();
+    res.json(orders);
   } catch (error) {
     console.error('Error fetching orders:', error);
     res.status(500).json({ error: 'Failed to fetch orders' });
@@ -102,19 +166,11 @@ app.get('/api/orders', async (req, res) => {
 // Get single order
 app.get('/api/orders/:id', async (req, res) => {
   try {
-    if (mongoose.connection.readyState === 1) {
-      const order = await Order.findOne({ id: req.params.id });
-      if (!order) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
-      res.json(order);
-    } else {
-      const order = ordersMemory.find(o => o.id === req.params.id);
-      if (!order) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
-      res.json(order);
+    const order = await findOrder(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
     }
+    res.json(order);
   } catch (error) {
     console.error('Error fetching order:', error);
     res.status(500).json({ error: 'Failed to fetch order' });
@@ -144,13 +200,8 @@ app.post('/api/orders', async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Store order in database or memory
-    if (mongoose.connection.readyState === 1) {
-      const newOrder = new Order(order);
-      await newOrder.save();
-    } else {
-      ordersMemory.push(order);
-    }
+    // Store order in database
+    const savedOrder = await saveOrder(order);
 
     // Send email to baker
     const bakerEmail = process.env.BAKER_EMAIL || 'baker@pastryparadise.com';
@@ -189,37 +240,16 @@ app.post('/api/orders', async (req, res) => {
 app.patch('/api/orders/:id', async (req, res) => {
   try {
     const { status } = req.body;
+    const order = await updateOrderStatus(req.params.id, status);
 
-    if (mongoose.connection.readyState === 1) {
-      const order = await Order.findOneAndUpdate(
-        { id: req.params.id },
-        { status, updatedAt: new Date() },
-        { new: true }
-      );
-
-      if (!order) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
-
-      res.json({
-        message: 'Order updated successfully',
-        order
-      });
-    } else {
-      const order = ordersMemory.find(o => o.id === req.params.id);
-
-      if (!order) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
-
-      order.status = status;
-      order.updatedAt = new Date().toISOString();
-
-      res.json({
-        message: 'Order updated successfully',
-        order
-      });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
     }
+
+    res.json({
+      message: 'Order updated successfully',
+      order
+    });
   } catch (error) {
     console.error('Error updating order:', error);
     res.status(500).json({ error: 'Failed to update order' });
@@ -349,7 +379,10 @@ app.use((req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🍰 Cake Ordering Backend running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Connect to MongoDB
+  await connectDB();
 });

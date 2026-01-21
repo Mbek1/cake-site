@@ -67,7 +67,12 @@
 
       <!-- Orders Tab -->
       <section v-if="activeTab === 'orders'" class="tab-content">
-        <h2>📋 All Orders</h2>
+        <div class="section-header">
+          <div>
+            <h2>📋 All Orders</h2>
+          </div>
+          <button @click="loadOrders" class="refresh-btn">🔄 Refresh Orders</button>
+        </div>
         
         <div class="filter-bar">
           <input 
@@ -373,6 +378,10 @@
 </template>
 
 <script>
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:3000/api';
+
 export default {
   name: 'AdminDashboard',
   data() {
@@ -487,9 +496,18 @@ export default {
     this.loadSettings();
   },
   methods: {
-    loadOrders() {
-      const stored = localStorage.getItem('bakery-orders');
-      this.orders = stored ? JSON.parse(stored) : this.getSampleOrders();
+    async loadOrders() {
+      try {
+        // Try to fetch from backend API
+        const response = await axios.get(`${API_BASE_URL}/orders`);
+        this.orders = response.data || [];
+        console.log('Orders loaded from backend:', this.orders);
+      } catch (error) {
+        console.warn('Could not fetch from backend, using localStorage:', error);
+        // Fallback to localStorage
+        const stored = localStorage.getItem('bakery-orders');
+        this.orders = stored ? JSON.parse(stored) : this.getSampleOrders();
+      }
     },
     saveOrders() {
       localStorage.setItem('bakery-orders', JSON.stringify(this.orders));
@@ -929,6 +947,9 @@ export default {
 
 .section-header {
   margin-bottom: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .section-header h2 {
@@ -937,6 +958,22 @@ export default {
   font-size: 2rem;
   font-weight: 700;
   letter-spacing: -0.5px;
+}
+
+.refresh-btn {
+  background: linear-gradient(135deg, #ec4899, #f43f5e);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(236, 72, 153, 0.4);
 }
 
 .section-subtitle {

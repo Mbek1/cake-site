@@ -109,6 +109,8 @@
 </template>
 
 <script>
+import { submitOrder } from '@/services/orderService';
+
 export default {
   name: 'OrderForm',
   props: {
@@ -170,11 +172,10 @@ export default {
           orderDate: new Date().toISOString()
         };
 
-        // For demonstration, we'll log the order and show success
+        // Send order to backend
         console.log('Order submitted:', orderData);
         
-        // In production, you would send this to your backend:
-        // const response = await submitOrder(orderData);
+        const response = await submitOrder(orderData);
         
         this.successMessage = '✓ Order submitted successfully! The baker will contact you soon.';
         this.$emit('order-submitted', orderData);
